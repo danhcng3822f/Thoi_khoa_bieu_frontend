@@ -8,14 +8,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-        .container { max-width: 1200px; }
+        .container { max-width: 1400px; } /* Làm dài ra */
         h1 { color: white; text-align: center; margin-bottom: 30px; font-weight: 300; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         .last-updated { background: #e7f3ff; padding: 10px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .class-header { background: #fff; border-radius: 10px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
         .class-select { border: none; font-weight: bold; }
         .timetable-table { font-size: 0.9em; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
         .table thead th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold; }
-        .slot { min-height: 70px; border: 1px solid #dee2e6; padding: 8px; cursor: pointer; transition: all 0.3s; text-align: center; vertical-align: top; }
+        .slot { min-height: 80px; border: 1px solid #dee2e6; padding: 8px; cursor: pointer; transition: all 0.3s; text-align: center; vertical-align: top; } /* Tăng height cho dài ra */
         .slot:hover { background: #f8f9fa; transform: scale(1.02); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .slot.monday { background: #e3f2fd; } /* Xanh dương nhạt cho Thứ Hai */
         .slot.tuesday { background: #e8f5e8; } /* Xanh lá nhạt cho Thứ Ba */
@@ -24,9 +24,6 @@
         .slot.friday { background: #ffebee; } /* Đỏ nhạt cho Thứ Sáu */
         .slot.saturday { background: #f5f5f5; } /* Xám cho Thứ Bảy */
         .slot.sunday { background: #fafafa; } /* Trắng cho CN */
-        .add-form { background: #d4edda; padding: 15px; border-radius: 10px; margin: 10px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .btn-upload { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; font-weight: bold; }
-        .btn-upload:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(40,167,69,0.3); }
         .class-color-8a { color: #007bff; } /* Xanh cho 8a */
         .class-color-8b { color: #fd7e14; } /* Cam cho 8b */
         .class-color-8c { color: #dc3545; } /* Đỏ cho 8c */
@@ -57,14 +54,7 @@
             </div>
         </div>
         
-        <!-- Nút upload JSON -->
-        <div class="add-form mb-3">
-            <h5><i class="fas fa-upload"></i> Update từ file JSON</h5>
-            <input type="file" id="jsonFile" accept=".json" class="form-control mb-2">
-            <button onclick="bulkUploadJson()" class="btn btn-upload w-100"><i class="fas fa-cloud-upload-alt"></i> Upload & Update</button>
-        </div>
-        
-        <!-- Bảng thời khóa biểu với màu cột -->
+        <!-- Bảng thời khóa biểu với màu cột, dài ra với 8 cột -->
         <table class="table table-bordered timetable-table">
             <thead class="table-dark">
                 <tr>
@@ -89,7 +79,7 @@
     </div>
 
     <script>
-        const API_URL = 'https://thoi-khoa-bieu-backend.onrender.com/api';  // Backend Render
+        const API_URL = 'https://thoi-khoa-bieu-backend.onrender.com/api';  // Backend Render của bạn
 
         let currentClass = '8a';  // Lớp mặc định
 
@@ -116,7 +106,7 @@
                     });
                 });
                 
-                // Điền vào slot tương ứng (dùng data-day/data-tiet thay regex để tránh lỗi)
+                // Điền vào slot tương ứng (dùng data-day/data-tiet để tránh lỗi regex)
                 document.querySelectorAll('.slot').forEach(slot => {
                     const day = slot.dataset.day;
                     const tiet = slot.dataset.tiet;
@@ -133,33 +123,6 @@
             currentClass = this.value;
             loadTimetable();
         });
-
-        // Upload JSON mới
-        async function bulkUploadJson() {
-            const file = document.getElementById('jsonFile').files[0];
-            if (!file) return alert('Chọn file JSON!');
-            
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    const response = await fetch(`${API_URL}/timetable`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    if (response.ok) {
-                        alert('Update thành công!');
-                        loadTimetable();  // Reload bảng
-                    } else {
-                        alert('Lỗi upload!');
-                    }
-                } catch (error) {
-                    alert('Lỗi parse JSON: ' + error.message);
-                }
-            };
-            reader.readAsText(file);
-        }
 
         // Load khi mở trang
         loadTimetable();

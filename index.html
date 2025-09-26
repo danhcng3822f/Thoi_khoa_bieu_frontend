@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thời Khóa Biểu Học Tập</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .container { max-width: 1200px; }
+        h1 { color: white; text-align: center; margin-bottom: 30px; font-weight: 300; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .last-updated { background: #e7f3ff; padding: 10px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .class-header { background: #fff; border-radius: 10px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .class-select { border: none; font-weight: bold; }
+        .timetable-table { font-size: 0.9em; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        .table thead th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: bold; }
+        .slot { min-height: 70px; border: 1px solid #dee2e6; padding: 8px; cursor: pointer; transition: all 0.3s; text-align: center; vertical-align: top; }
+        .slot:hover { background: #f8f9fa; transform: scale(1.02); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .slot.monday { background: #e3f2fd; } /* Xanh dương nhạt cho Thứ Hai */
+        .slot.tuesday { background: #e8f5e8; } /* Xanh lá nhạt cho Thứ Ba */
+        .slot.wednesday { background: #fff3e0; } /* Cam nhạt cho Thứ Tư */
+        .slot.thursday { background: #f3e5f5; } /* Tím nhạt cho Thứ Năm */
+        .slot.friday { background: #ffebee; } /* Đỏ nhạt cho Thứ Sáu */
+        .slot.saturday { background: #f5f5f5; } /* Xám cho Thứ Bảy */
+        .slot.sunday { background: #fafafa; } /* Trắng cho CN */
+        .add-form { background: #d4edda; padding: 15px; border-radius: 10px; margin: 10px 0; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .btn-upload { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; font-weight: bold; }
+        .btn-upload:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(40,167,69,0.3); }
+        .class-color-8a { color: #007bff; } /* Xanh cho 8a */
+        .class-color-8b { color: #fd7e14; } /* Cam cho 8b */
+        .class-color-8c { color: #dc3545; } /* Đỏ cho 8c */
+        .class-color-9a { color: #6f42c1; } /* Tím cho 9a */
+        .class-color-9b { color: #20c997; } /* Xanh ngọc cho 9b */
+    </style>
+</head>
+<body>
+    <div class="container my-4">
+        <h1 class="text-center mb-4"><i class="fas fa-calendar-alt"></i> Thời Khóa Biểu Học Tập</h1>
+        
+        <!-- Timestamp update -->
+        <div id="lastUpdated" class="last-updated text-center">
+            <strong>Cập nhật lần cuối: </strong><span id="timestamp"></span>
+        </div>
+        
+        <!-- Dropdown chọn lớp với màu -->
+        <div class="row mb-3 class-header">
+            <div class="col-md-4">
+                <label class="form-label">Chọn lớp:</label>
+                <select id="classSelect" class="form-select class-select" onchange="changeClassColor(this.value)">
+                    <option value="8a" class="class-color-8a">8A</option>
+                    <option value="8b" class="class-color-8b">8B</option>
+                    <option value="8c" class="class-color-8c">8C</option>
+                    <option value="9a" class="class-color-9a">9A</option>
+                    <option value="9b" class="class-color-9b">9B</option>
+                </select>
+            </div>
+        </div>
+        
+        <!-- Nút upload JSON -->
+        <div class="add-form mb-3">
+            <h5><i class="fas fa-upload"></i> Update từ file JSON</h5>
+            <input type="file" id="jsonFile" accept=".json" class="form-control mb-2">
+            <button onclick="bulkUploadJson()" class="btn btn-upload w-100"><i class="fas fa-cloud-upload-alt"></i> Upload & Update</button>
+        </div>
+        
+        <!-- Bảng thời khóa biểu với màu cột -->
+        <table class="table table-bordered timetable-table">
+            <thead class="table-dark">
+                <tr>
+                    <th>Tiết</th>
+                    <th class="monday">Thứ Hai</th>
+                    <th class="tuesday">Thứ Ba</th>
+                    <th class="wednesday">Thứ Tư</th>
+                    <th class="thursday">Thứ Năm</th>
+                    <th class="friday">Thứ Sáu</th>
+                    <th class="saturday">Thứ Bảy</th>
+                    <th class="sunday">Chủ Nhật</th>
+                </tr>
+            </thead>
+            <tbody id="timetableBody">
+                <tr><td>Tiết 1</td><td class="slot monday" data-day="Thứ Hai" data-tiet="Tiết 1"></td><td class="slot tuesday" data-day="Thứ Ba" data-tiet="Tiết 1"></td><td class="slot wednesday" data-day="Thứ Tư" data-tiet="Tiết 1"></td><td class="slot thursday" data-day="Thứ Năm" data-tiet="Tiết 1"></td><td class="slot friday" data-day="Thứ Sáu" data-tiet="Tiết 1"></td><td class="slot saturday" data-day="Thứ Bảy" data-tiet="Tiết 1"></td><td class="slot sunday" data-day="Chủ Nhật" data-tiet="Tiết 1"></td></tr>
+                <tr><td>Tiết 2</td><td class="slot monday" data-day="Thứ Hai" data-tiet="Tiết 2"></td><td class="slot tuesday" data-day="Thứ Ba" data-tiet="Tiết 2"></td><td class="slot wednesday" data-day="Thứ Tư" data-tiet="Tiết 2"></td><td class="slot thursday" data-day="Thứ Năm" data-tiet="Tiết 2"></td><td class="slot friday" data-day="Thứ Sáu" data-tiet="Tiết 2"></td><td class="slot saturday" data-day="Thứ Bảy" data-tiet="Tiết 2"></td><td class="slot sunday" data-day="Chủ Nhật" data-tiet="Tiết 2"></td></tr>
+                <tr><td>Tiết 3</td><td class="slot monday" data-day="Thứ Hai" data-tiet="Tiết 3"></td><td class="slot tuesday" data-day="Thứ Ba" data-tiet="Tiết 3"></td><td class="slot wednesday" data-day="Thứ Tư" data-tiet="Tiết 3"></td><td class="slot thursday" data-day="Thứ Năm" data-tiet="Tiết 3"></td><td class="slot friday" data-day="Thứ Sáu" data-tiet="Tiết 3"></td><td class="slot saturday" data-day="Thứ Bảy" data-tiet="Tiết 3"></td><td class="slot sunday" data-day="Chủ Nhật" data-tiet="Tiết 3"></td></tr>
+                <tr><td>Tiết 4</td><td class="slot monday" data-day="Thứ Hai" data-tiet="Tiết 4"></td><td class="slot tuesday" data-day="Thứ Ba" data-tiet="Tiết 4"></td><td class="slot wednesday" data-day="Thứ Tư" data-tiet="Tiết 4"></td><td class="slot thursday" data-day="Thứ Năm" data-tiet="Tiết 4"></td><td class="slot friday" data-day="Thứ Sáu" data-tiet="Tiết 4"></td><td class="slot saturday" data-day="Thứ Bảy" data-tiet="Tiết 4"></td><td class="slot sunday" data-day="Chủ Nhật" data-tiet="Tiết 4"></td></tr>
+                <tr><td>Tiết 5</td><td class="slot monday" data-day="Thứ Hai" data-tiet="Tiết 5"></td><td class="slot tuesday" data-day="Thứ Ba" data-tiet="Tiết 5"></td><td class="slot wednesday" data-day="Thứ Tư" data-tiet="Tiết 5"></td><td class="slot thursday" data-day="Thứ Năm" data-tiet="Tiết 5"></td><td class="slot friday" data-day="Thứ Sáu" data-tiet="Tiết 5"></td><td class="slot saturday" data-day="Thứ Bảy" data-tiet="Tiết 5"></td><td class="slot sunday" data-day="Chủ Nhật" data-tiet="Tiết 5"></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';  // Đổi thành Render URL nếu deploy
+
+        let currentClass = '8a';  // Lớp mặc định
+
+        // Load lịch khi mở trang hoặc đổi lớp
+        async function loadTimetable() {
+            try {
+                const response = await fetch(`${API_URL}/timetable`);
+                const data = await response.json();
+                
+                // Hiển thị timestamp
+                if (data.last_updated) {
+                    document.getElementById('timestamp').textContent = data.last_updated;
+                }
+                
+                // Điền vào bảng cho lớp hiện tại
+                const classData = data[currentClass] || {};
+                const slots = {};
+                Object.keys(classData).forEach(day => {
+                    Object.keys(classData[day]).forEach(tiet => {
+                        const slot = classData[day][tiet];
+                        if (slot && slot.subject) {
+                            slots[`${day}_${tiet}`] = `<strong>Môn: ${slot.subject}</strong><br>GV: ${slot.teacher}`;
+                        }
+                    });
+                });
+                
+                // Điền vào slot tương ứng (dùng data-day/data-tiet thay regex để tránh lỗi)
+                document.querySelectorAll('.slot').forEach(slot => {
+                    const day = slot.dataset.day;
+                    const tiet = slot.dataset.tiet;
+                    const key = `${day}_${tiet}`;
+                    slot.innerHTML = slots[key] || '';
+                });
+            } catch (error) {
+                console.error('Lỗi load:', error);
+            }
+        }
+
+        // Đổi lớp
+        document.getElementById('classSelect').addEventListener('change', function() {
+            currentClass = this.value;
+            loadTimetable();
+        });
+
+        // Upload JSON mới
+        async function bulkUploadJson() {
+            const file = document.getElementById('jsonFile').files[0];
+            if (!file) return alert('Chọn file JSON!');
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const response = await fetch(`${API_URL}/timetable`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    if (response.ok) {
+                        alert('Update thành công!');
+                        loadTimetable();  // Reload bảng
+                    } else {
+                        alert('Lỗi upload!');
+                    }
+                } catch (error) {
+                    alert('Lỗi parse JSON: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Load khi mở trang
+        loadTimetable();
+    </script>
+</body>
+</html>
